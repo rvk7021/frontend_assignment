@@ -48,3 +48,67 @@ export const validateForm = (formData, isEdit = false, students = []) => {
 
     return errors;
 };
+
+// Test utility functions
+export const normalizeName = (s) => {
+    // Convert to lowercase and remove accents
+    return s.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+};
+
+export const isFuzzyMatch = (a, b) => {
+    // Allow 1 edit distance (insert, delete, or substitute)
+    const normalizedA = a.toLowerCase();
+    const normalizedB = b.toLowerCase();
+    
+    if (Math.abs(normalizedA.length - normalizedB.length) > 1) {
+        return false;
+    }
+    
+    let i = 0, j = 0;
+    let edits = 0;
+    
+    while (i < normalizedA.length && j < normalizedB.length) {
+        if (normalizedA[i] === normalizedB[j]) {
+            i++;
+            j++;
+        } else {
+            edits++;
+            if (edits > 1) return false;
+            
+            // Try substitute
+            if (normalizedA.length === normalizedB.length) {
+                i++;
+                j++;
+            }
+            // Try delete from a
+            else if (normalizedA.length > normalizedB.length) {
+                i++;
+            }
+            // Try delete from b (insert to a)
+            else {
+                j++;
+            }
+        }
+    }
+    
+    // Account for remaining characters
+    edits += (normalizedA.length - i) + (normalizedB.length - j);
+    
+    return edits <= 1;
+};
+
+// Test runner function
+export const runTests = () => {
+    try {
+        console.assert(normalizeName("José") === "jose", "Test 1 failed: normalizeName('José') should equal 'jose'");
+        console.assert(normalizeName("JOSE") === "jose", "Test 2 failed: normalizeName('JOSE') should equal 'jose'");
+        console.assert(isFuzzyMatch("rvi", "ravi") === true, "Test 3 failed: isFuzzyMatch('rvi', 'ravi') should be true");
+        console.assert(isFuzzyMatch("cse2025-01", "CSE2025-001") === true, "Test 4 failed: isFuzzyMatch('cse2025-01', 'CSE2025-001') should be true");
+        console.assert(isFuzzyMatch("ana", "arun") === false, "Test 5 failed: isFuzzyMatch('ana', 'arun') should be false");
+        
+        return true;
+    } catch (error) {
+        console.error("Test failed:", error.message);
+        return false;
+    }
+};
