@@ -1,0 +1,194 @@
+import React, { useState, useEffect } from 'react';
+import { CheckCircle, AlertCircle } from 'lucide-react';
+import Modal from './Modal';
+import { FormInput, FormSelect } from './FormComponents';
+import { validateForm } from '../utils/helpers';
+
+// Edit Student Modal
+const EditStudentModal = ({ student, isOpen, onClose, onSave, students }) => {
+    const [formData, setFormData] = useState({
+        rollNumber: '',
+        name: '',
+        department: 'CSE',
+        year: 1,
+        cgpa: ''
+    });
+    const [errors, setErrors] = useState({});
+    const [isSubmitting, setIsSubmitting] = useState(false);
+    const [hasChanges, setHasChanges] = useState(false);
+
+    useEffect(() => {
+        if (student) {
+            const newFormData = {
+                rollNumber: student.rollNumber,
+                name: student.name,
+                department: student.department,
+                year: student.year,
+                cgpa: student.cgpa.toString()
+            };
+            setFormData(newFormData);
+            setHasChanges(false);
+            setErrors({});
+        }
+    }, [student]);
+
+    const handleInputChange = (field, value) => {
+        setFormData(prev => ({ ...prev, [field]: value }));
+        setHasChanges(true);
+        // Clear error when user starts typing
+        if (errors[field]) {
+            setErrors(prev => ({ ...prev, [field]: '' }));
+        }
+    };
+
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+        const validationErrors = validateForm(formData, true, students);
+
+        if (Object.keys(validationErrors).length > 0) {
+            setErrors(validationErrors);
+            return;
+        }
+
+        setIsSubmitting(true);
+
+        // Simulate API call delay
+        await new Promise(resolve => setTimeout(resolve, 500));
+
+        onSave({
+            ...formData,
+            name: formData.name.trim(),
+            year: parseInt(formData.year),
+            cgpa: parseFloat(formData.cgpa)
+        });
+
+        setErrors({});
+        setIsSubmitting(false);
+        setHasChanges(false);
+    };
+
+    const handleClose = () => {
+        if (!isSubmitting) {
+            if (hasChanges) {
+                if (window.confirm('You have unsaved changes. Are you sure you want to close?')) {
+                    setErrors({});
+                    setHasChanges(false);
+                    onClose();
+                }
+            } else {
+                onClose();
+            }
+        }
+    };
+
+    return (
+        <Modal isOpen={isOpen} onClose={handleClose} title="Edit Student" size="lg">
+            <form onSubmit={handleSubmit} className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <FormInput
+                        label="Roll Number"
+                        value={formData.rollNumber}
+                        disabled
+                        className="bg-gray-50 text-gray-500 cursor-not-allowed"
+                        helpText="Roll number cannot be changed"
+                    />
+
+                    <FormInput
+                        label="Student Name"
+                        required
+                        value={formData.name}
+                        onChange={(e) => handleInputChange('name', e.target.value)}
+                        placeholder="Enter full name"
+                        error={errors.name}
+                        disabled={isSubmitting}
+                    />
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <FormSelect
+                        label="Department"
+                        required
+                        value={formData.department}
+                        onChange={(e) => handleInputChange('department', e.target.value)}
+                        error={errors.department}
+                        disabled={isSubmitting}
+                    >
+                        <option value="CSE">Computer Science</option>
+                        <option value="ECE">Electronics</option>
+                        <option value="ME">Mechanical</option>
+                        <option value="CE">Civil</option>
+                        <option value="EE">Electrical</option>
+                    </FormSelect>
+
+                    <FormSelect
+                        label="Academic Year"
+                        required
+                        value={formData.year}
+                        onChange={(e) => handleInputChange('year', e.target.value)}
+                        error={errors.year}
+                        disabled={isSubmitting}
+                    >
+                        <option value={1}>1st Year</option>
+                        <option value={2}>2nd Year</option>
+                        <option value={3}>3rd Year</option>
+                        <option value={4}>4th Year</option>
+                    </FormSelect>
+
+                    <FormInput
+                        label="CGPA"
+                        type="number"
+                        step="0.1"
+                        min="0"
+                        max="10"
+                        required
+                        value={formData.cgpa}
+                        onChange={(e) => handleInputChange('cgpa', e.target.value)}
+                        placeholder="0.0"
+                        error={errors.cgpa}
+                        helpText="Scale: 0.0 to 10.0"
+                        disabled={isSubmitting}
+                    />
+                </div>
+
+                {hasChanges && (
+                    <div className="bg-amber-50 border border-amber-200 rounded-lg p-3">
+                        <div className="flex items-center gap-2 text-amber-800 text-sm">
+                            <AlertCircle className="w-4 h-4" />
+                            <span>You have unsaved changes</span>
+                        </div>
+                    </div>
+                )}
+
+                <div className="flex gap-3 pt-6 border-t border-gray-200">
+                    <button
+                        type="button"
+                        onClick={handleClose}
+                        disabled={isSubmitting}
+                        className="flex-1 px-4 py-3 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                        Cancel
+                    </button>
+                    <button
+                        type="submit"
+                        disabled={isSubmitting || !hasChanges}
+                        className="flex-1 px-4 py-3 text-sm font-medium bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                    >
+                        {isSubmitting ? (
+                            <>
+                                <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                                Updating...
+                            </>
+                        ) : (
+                            <>
+                                <CheckCircle className="w-4 h-4" />
+                                Update Student
+                            </>
+                        )}
+                    </button>
+                </div>
+            </form>
+        </Modal>
+    );
+};
+
+export default EditStudentModal;
