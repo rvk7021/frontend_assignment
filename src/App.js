@@ -1,5 +1,8 @@
 import React, { useState, useMemo } from 'react';
 
+// Import contexts
+import { ThemeProvider } from './contexts/ThemeContext';
+
 // Import components
 import Header from './components/Header';
 import StatsCards from './components/StatsCards';
@@ -25,6 +28,7 @@ function App() {
   const [departmentFilter, setDepartmentFilter] = useState('');
   const [yearFilter, setYearFilter] = useState('');
   const [cgpaSort, setCgpaSort] = useState('');
+  const [nameSort, setNameSort] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage] = useState(10);
   const [showFilters, setShowFilters] = useState(false);
@@ -53,8 +57,14 @@ function App() {
       result.sort((a, b) => a.cgpa - b.cgpa);
     }
 
+    if (nameSort === 'asc') {
+      result.sort((a, b) => a.name.localeCompare(b.name));
+    } else if (nameSort === 'desc') {
+      result.sort((a, b) => b.name.localeCompare(a.name));
+    }
+
     return result;
-  }, [students, searchQuery, departmentFilter, yearFilter, cgpaSort]);
+  }, [students, searchQuery, departmentFilter, yearFilter, cgpaSort, nameSort]);
 
   // Pagination
   const totalPages = Math.ceil(filteredAndSortedStudents.length / itemsPerPage);
@@ -65,7 +75,7 @@ function App() {
 
   React.useEffect(() => {
     setCurrentPage(1);
-  }, [searchQuery, departmentFilter, yearFilter, cgpaSort]);
+  }, [searchQuery, departmentFilter, yearFilter, cgpaSort, nameSort]);
 
   const handleSaveStudent = (studentData) => {
     setStudents(prev => [...prev, studentData]);
@@ -102,73 +112,78 @@ function App() {
     setDepartmentFilter('');
     setYearFilter('');
     setCgpaSort('');
+    setNameSort('');
     setCurrentPage(1);
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-        {/* Header */}
-        <Header 
-          studentsCount={students.length}
-          setIsAddModalOpen={setIsAddModalOpen}
-        />
+    <ThemeProvider>
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+          {/* Header */}
+          <Header 
+            studentsCount={students.length}
+            setIsAddModalOpen={setIsAddModalOpen}
+          />
 
-        {/* Stats Cards */}
-        <StatsCards students={students} />
+          {/* Stats Cards */}
+          <StatsCards students={students} />
 
-        {/* Search and Filters */}
-        <SearchAndFilters
-          searchQuery={searchQuery}
-          setSearchQuery={setSearchQuery}
-          departmentFilter={departmentFilter}
-          setDepartmentFilter={setDepartmentFilter}
-          yearFilter={yearFilter}
-          setYearFilter={setYearFilter}
-          cgpaSort={cgpaSort}
-          setCgpaSort={setCgpaSort}
-          showFilters={showFilters}
-          setShowFilters={setShowFilters}
-          resetFilters={resetFilters}
-        />
+          {/* Search and Filters */}
+          <SearchAndFilters
+            searchQuery={searchQuery}
+            setSearchQuery={setSearchQuery}
+            departmentFilter={departmentFilter}
+            setDepartmentFilter={setDepartmentFilter}
+            yearFilter={yearFilter}
+            setYearFilter={setYearFilter}
+            cgpaSort={cgpaSort}
+            setCgpaSort={setCgpaSort}
+            nameSort={nameSort}
+            setNameSort={setNameSort}
+            showFilters={showFilters}
+            setShowFilters={setShowFilters}
+            resetFilters={resetFilters}
+          />
 
-        {/* Student List */}
-        <StudentList
-          paginatedStudents={paginatedStudents}
-          filteredAndSortedStudents={filteredAndSortedStudents}
+          {/* Student List */}
+          <StudentList
+            paginatedStudents={paginatedStudents}
+            filteredAndSortedStudents={filteredAndSortedStudents}
+            students={students}
+            handleEditStudent={handleEditStudent}
+            handleDeleteStudent={handleDeleteStudent}
+            resetFilters={resetFilters}
+          />
+
+          {/* Pagination */}
+          <Pagination
+            currentPage={currentPage}
+            totalPages={totalPages}
+            setCurrentPage={setCurrentPage}
+          />
+        </div>
+
+        {/* Modals */}
+        <AddStudentModal
+          isOpen={isAddModalOpen}
+          onClose={() => setIsAddModalOpen(false)}
+          onSave={handleSaveStudent}
           students={students}
-          handleEditStudent={handleEditStudent}
-          handleDeleteStudent={handleDeleteStudent}
-          resetFilters={resetFilters}
         />
 
-        {/* Pagination */}
-        <Pagination
-          currentPage={currentPage}
-          totalPages={totalPages}
-          setCurrentPage={setCurrentPage}
+        <EditStudentModal
+          student={editingStudent}
+          isOpen={isEditModalOpen}
+          onClose={() => setIsEditModalOpen(false)}
+          onSave={handleUpdateStudent}
+          students={students}
         />
+
+        {/* Toast Notifications */}
+        <ToastComponent />
       </div>
-
-      {/* Modals */}
-      <AddStudentModal
-        isOpen={isAddModalOpen}
-        onClose={() => setIsAddModalOpen(false)}
-        onSave={handleSaveStudent}
-        students={students}
-      />
-
-      <EditStudentModal
-        student={editingStudent}
-        isOpen={isEditModalOpen}
-        onClose={() => setIsEditModalOpen(false)}
-        onSave={handleUpdateStudent}
-        students={students}
-      />
-
-      {/* Toast Notifications */}
-      <ToastComponent />
-    </div>
+    </ThemeProvider>
   );
 }
 

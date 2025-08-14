@@ -136,10 +136,7 @@ const EditStudentModal = ({ student, isOpen, onClose, onSave, students }) => {
 
                     <FormInput
                         label="CGPA"
-                        type="number"
-                        step="0.1"
-                        min="0"
-                        max="10"
+                        type="text"
                         required
                         value={formData.cgpa}
                         onChange={(e) => handleInputChange('cgpa', e.target.value)}

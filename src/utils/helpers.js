@@ -1,12 +1,21 @@
 // Fuzzy search function
 export const fuzzySearchStudents = (students, query) => {
     if (!query) return students;
-    const lowerQuery = query.toLowerCase();
-    return students.filter(student =>
-        student.name.toLowerCase().includes(lowerQuery) ||
-        student.rollNumber.toLowerCase().includes(lowerQuery) ||
-        student.department.toLowerCase().includes(lowerQuery)
-    );
+    const normalizedQuery = normalizeName(query);
+    
+    return students.filter(student => {
+        const normalizedName = normalizeName(student.name);
+        const normalizedRoll = normalizeName(student.rollNumber);
+        
+        // Check for exact substring match first (faster)
+        if (normalizedName.includes(normalizedQuery) || normalizedRoll.includes(normalizedQuery)) {
+            return true;
+        }
+        
+        // Then check for fuzzy match with 1 edit distance
+        return isFuzzyMatch(normalizedQuery, normalizedName) || 
+               isFuzzyMatch(normalizedQuery, normalizedRoll);
+    });
 };
 
 // Form validation
